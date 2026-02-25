@@ -7,6 +7,7 @@ export class OrdenResponse {
   estado_orden: string;
   monto_total: number;
   descripcion?: string;
+  productos: any[];
 
   constructor(orden: Orden) {
     this.id_orden = orden.id_orden;
@@ -15,5 +16,6 @@ export class OrdenResponse {
     this.estado_orden = orden.estado_orden;
     this.monto_total = orden.monto_total;
     this.descripcion = orden.descripcion;
+    this.productos = orden.productos;
   }
 }
