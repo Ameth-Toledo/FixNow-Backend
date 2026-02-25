@@ -7,10 +7,12 @@ import { configureUserRoutes } from './src/users/infrastructure/routes/routes';
 import { configureProductRoutes } from './src/products/infrastructure/routes/routes';
 import { configureCategoriasRoutes } from './src/categories/infrastructure/routes/routes';
 import { configureEspecificacionesRoutes } from './src/specifications/infrastructure/routes/routes';
+import { configureOrdenesRoutes } from './src/orders/infrastructure/routes/routes';
 import { authController, createUserController, getAllUsersController, getUserByIdController, updateUserController, deleteUserController, } from './src/users/infrastructure/dependencies';
 import { createProductController, getAllProductsController, getProductByIdController, updateProductController, deleteProductController, getProductsByCategoryController } from './src/products/infrastructure/dependencies';
 import { createCategoriaController, getAllCategoriasController, getCategoriaByIdController, updateCategoriaController, deleteCategoriaController } from './src/categories/infrastructure/dependencies';
 import { createEspecificacionController, getAllEspecificacionesController, getEspecificacionByIdController, getEspecificacionesByProductIdController, updateEspecificacionController, deleteEspecificacionController } from './src/specifications/infrastructure/dependencies';
+import { createOrdenController, getAllOrdenesController, getOrdenByIdController, getOrdenesByUsuarioIdController, updateOrdenController, deleteOrdenController } from './src/orders/infrastructure/dependencies';
 
 dotenv.config();
 
@@ -62,10 +64,20 @@ const especificacionesRoutes = configureEspecificacionesRoutes(
   deleteEspecificacionController
 );
 
+const ordenesRoutes = configureOrdenesRoutes(
+  createOrdenController,
+  getAllOrdenesController,
+  getOrdenByIdController,
+  getOrdenesByUsuarioIdController,
+  updateOrdenController,
+  deleteOrdenController
+);
+
 app.use('/api', userRoutes);
 app.use('/api', productRoutes);
 app.use('/api', categoriasRoutes);
 app.use('/api', especificacionesRoutes);
+app.use('/api', ordenesRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hexagonal Architecture API - Running' });
