@@ -29,17 +29,51 @@ export class UpdateUserUseCase {
       throw new Error('El email no es valido');
     }
 
+    const normalizedEmail = updateRequest.email.trim().toLowerCase();
+    const userWithSameEmail = await this.userRepository.getByEmail(normalizedEmail);
+
+    if (userWithSameEmail && userWithSameEmail.id !== id) {
+      throw new Error('El email ya esta registrado');
+    }
+
     const updatedUser: User = {
       ...existingUser,
       name: updateRequest.name.trim(),
-      secondname: updateRequest.secondname?.trim() || null,
+      secondname: updateRequest.secondname !== undefined
+        ? this.normalizeOptionalString(updateRequest.secondname)
+        : existingUser.secondname,
       lastname: updateRequest.lastname.trim(),
-      secondlastname: updateRequest.secondlastname?.trim() || null,
-      email: updateRequest.email.trim().toLowerCase(),
+      secondlastname: updateRequest.secondlastname !== undefined
+        ? this.normalizeOptionalString(updateRequest.secondlastname)
+        : existingUser.secondlastname,
+      email: normalizedEmail,
+      phone: updateRequest.phone !== undefined
+        ? this.normalizeOptionalString(updateRequest.phone)
+        : existingUser.phone,
+      image_profile: updateRequest.image_profile !== undefined
+        ? this.normalizeOptionalString(updateRequest.image_profile)
+        : existingUser.image_profile,
+      company_name: updateRequest.company_name !== undefined
+        ? this.normalizeOptionalString(updateRequest.company_name)
+        : existingUser.company_name,
+      company_tax_id: updateRequest.company_tax_id !== undefined
+        ? this.normalizeOptionalString(updateRequest.company_tax_id)
+        : existingUser.company_tax_id,
+      company_address: updateRequest.company_address !== undefined
+        ? this.normalizeOptionalString(updateRequest.company_address)
+        : existingUser.company_address,
+      firebase_token: updateRequest.firebase_token !== undefined
+        ? this.normalizeOptionalString(updateRequest.firebase_token)
+        : existingUser.firebase_token,
     };
 
     await this.userRepository.update(updatedUser);
 
     return updatedUser;
+  }
+
+  private normalizeOptionalString(value?: string | null): string | null {
+    const normalized = value?.trim();
+    return normalized ? normalized : null;
   }
 }

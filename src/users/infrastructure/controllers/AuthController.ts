@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../../application/AuthService';
 import { LoginRequest } from '../../domain/dto/UserRequest';
-import { UserResponse, LoginResponse } from '../../domain/dto/UserResponse';
+import { LoginResponse, toUserResponse } from '../../domain/dto/UserResponse';
 import { generateJWT, generateRefreshToken, setAuthCookie, setRefreshCookie, clearAuthCookies, validateRefreshToken } from '../../../core/security/auth';
 
 export class AuthController {
@@ -13,29 +13,17 @@ export class AuthController {
 
       const user = await this.authService.login(loginRequest);
 
-      const accessToken = generateJWT(user.id, user.email, 1);
+      const accessToken = generateJWT(user.id, user.email, user.role);
       const refreshToken = generateRefreshToken(user.id);
 
       setAuthCookie(res, accessToken);
       setRefreshCookie(res, refreshToken);
 
-      const userResponse: UserResponse = {
-        id: user.id,
-        name: user.name,
-        secondname: user.secondname,
-        lastname: user.lastname,
-        secondlastname: user.secondlastname,
-        email: user.email,        phone: user.phone,
-        image_profile: user.image_profile,
-        role: user.role,
-        created_at: user.created_at.toISOString(),
-      };
-
       const response: LoginResponse = {
         message: 'Login exitoso',
         accessToken: accessToken,
         refreshToken: refreshToken,
-        user: userResponse,
+        user: toUserResponse(user),
       };
 
       res.status(200).json(response);
@@ -71,7 +59,7 @@ export class AuthController {
 
       const user = await this.authService.getUserByID(claims.userId);
 
-      const newAccessToken = generateJWT(user.id, user.email, 1);
+      const newAccessToken = generateJWT(user.id, user.email, user.role);
 
       setAuthCookie(res, newAccessToken);
       res.status(200).json({ message: 'Token renovado' });
@@ -89,19 +77,7 @@ export class AuthController {
 
       const user = await this.authService.getUserByID(req.userId);
 
-      const userResponse: UserResponse = {
-        id: user.id,
-        name: user.name,
-        secondname: user.secondname,
-        lastname: user.lastname,
-        secondlastname: user.secondlastname,
-        email: user.email,        phone: user.phone,
-        image_profile: user.image_profile,
-        role: user.role,
-        created_at: user.created_at.toISOString(),
-      };
-
-      res.status(200).json({ user: userResponse });
+      res.status(200).json({ user: toUserResponse(user) });
     } catch (error) {
       res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -113,8 +89,31 @@ export class AuthController {
       user: {
         id: req.userId,
         email: req.email,
-        roleId: req.roleId,
+        role: req.role,
       },
     });
+  }
+
+  async updateFirebaseToken(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'No autenticado' });
+        return;
+      }
+
+      const firebaseToken = req.body?.firebase_token ?? req.body?.fcm_token ?? req.body?.token;
+      const user = await this.authService.updateFirebaseToken(req.userId, firebaseToken);
+
+      res.status(200).json({
+        message: 'Token FCM actualizado exitosamente',
+        user: toUserResponse(user),
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'Error interno del servidor' });
+      }
+    }
   }
 }

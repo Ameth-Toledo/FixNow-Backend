@@ -6,6 +6,7 @@ export interface IUserRepository {
   getByID(id: number): Promise<User | null>;
   getAll(): Promise<User[]>;
   update(user: User): Promise<void>;
+  updateFirebaseToken(id: number, firebaseToken: string | null): Promise<void>;
   delete(id: number): Promise<void>;
   getTotal(): Promise<number>;
 }

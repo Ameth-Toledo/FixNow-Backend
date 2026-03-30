@@ -1,3 +1,6 @@
+export type UserRole = 'user' | 'technician' | 'admin';
+export type AccountType = 'person' | 'company';
+
 export interface User {
   id: number;
   name: string;
@@ -8,6 +11,11 @@ export interface User {
   password: string;
   phone: string | null;         
   image_profile: string | null;
-  role: 'user' | 'technician' | 'admin';
+  role: UserRole;
+  account_type: AccountType;
+  company_name: string | null;
+  company_tax_id: string | null;
+  company_address: string | null;
+  firebase_token: string | null;
   created_at: Date;
 }

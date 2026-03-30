@@ -12,9 +12,22 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20) DEFAULT NULL,
     image_profile VARCHAR(255) DEFAULT NULL,
-    role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    role ENUM('user', 'technician', 'admin') NOT NULL DEFAULT 'user',
+    account_type ENUM('person', 'company') NOT NULL DEFAULT 'person',
+    company_name VARCHAR(150) DEFAULT NULL,
+    company_tax_id VARCHAR(50) DEFAULT NULL,
+    company_address VARCHAR(255) DEFAULT NULL,
+    firebase_token VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Si la tabla users ya existe en tu base actual, aplica manualmente:
+-- ALTER TABLE users MODIFY role ENUM('user', 'technician', 'admin') NOT NULL DEFAULT 'user';
+-- ALTER TABLE users ADD COLUMN account_type ENUM('person', 'company') NOT NULL DEFAULT 'person' AFTER role;
+-- ALTER TABLE users ADD COLUMN company_name VARCHAR(150) DEFAULT NULL AFTER account_type;
+-- ALTER TABLE users ADD COLUMN company_tax_id VARCHAR(50) DEFAULT NULL AFTER company_name;
+-- ALTER TABLE users ADD COLUMN company_address VARCHAR(255) DEFAULT NULL AFTER company_tax_id;
+-- ALTER TABLE users ADD COLUMN firebase_token VARCHAR(255) DEFAULT NULL AFTER company_address;
 
 CREATE TABLE categorias (
     id_categoria INT AUTO_INCREMENT PRIMARY KEY,

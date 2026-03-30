@@ -1,3 +1,5 @@
+import { AccountType, UserRole } from '../entities/User';
+
 export interface UserRequest {
   name: string;
   secondname?: string;
@@ -7,12 +9,18 @@ export interface UserRequest {
   password: string;
   phone?: string;
   image_profile?: string;
-  role?: 'user' | 'technician' | 'admin';
+  role?: UserRole;
+  account_type?: AccountType;
+  company_name?: string;
+  company_tax_id?: string;
+  company_address?: string;
+  firebase_token?: string | null;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
+  firebase_token?: string | null;
 }
 
 export interface UpdateUserRequest {
@@ -23,4 +31,8 @@ export interface UpdateUserRequest {
   email?: string;
   phone?: string;
   image_profile?: string;
+  company_name?: string;
+  company_tax_id?: string;
+  company_address?: string;
+  firebase_token?: string | null;
 }

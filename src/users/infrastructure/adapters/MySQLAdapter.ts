@@ -6,8 +6,24 @@ import { RowDataPacket, ResultSetHeader } from 'mysql2';
 export class MySQLUserRepository implements IUserRepository {
   async save(user: Omit<User, 'id' | 'created_at'>): Promise<User> {
     const query = `
-      INSERT INTO users (name, secondname, lastname, secondlastname, email, password, phone, image_profile, role, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      INSERT INTO users (
+        name,
+        secondname,
+        lastname,
+        secondlastname,
+        email,
+        password,
+        phone,
+        image_profile,
+        role,
+        account_type,
+        company_name,
+        company_tax_id,
+        company_address,
+        firebase_token,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const [result] = await pool.execute<ResultSetHeader>(query, [
@@ -20,6 +36,11 @@ export class MySQLUserRepository implements IUserRepository {
       user.phone,
       user.image_profile,
       user.role,
+      user.account_type,
+      user.company_name,
+      user.company_tax_id,
+      user.company_address,
+      user.firebase_token,
     ]);
 
     const [rows] = await pool.execute<RowDataPacket[]>(
@@ -27,20 +48,7 @@ export class MySQLUserRepository implements IUserRepository {
       [result.insertId]
     );
 
-    const row = rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      secondname: row.secondname,
-      lastname: row.lastname,
-      secondlastname: row.secondlastname,
-      email: row.email,
-      password: row.password,
-      phone: row.phone,
-      image_profile: row.image_profile,
-      role: row.role,
-      created_at: new Date(row.created_at),
-    };
+    return this.mapRowToUser(rows[0]);
   }
 
   async getByEmail(email: string): Promise<User | null> {
@@ -51,20 +59,7 @@ export class MySQLUserRepository implements IUserRepository {
 
     if (rows.length === 0) return null;
 
-    const row = rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      secondname: row.secondname,
-      lastname: row.lastname,
-      secondlastname: row.secondlastname,
-      email: row.email,
-      password: row.password,
-      phone: row.phone,
-      image_profile: row.image_profile,
-      role: row.role,
-      created_at: new Date(row.created_at),
-    };
+    return this.mapRowToUser(rows[0]);
   }
 
   async getByID(id: number): Promise<User | null> {
@@ -75,20 +70,7 @@ export class MySQLUserRepository implements IUserRepository {
 
     if (rows.length === 0) return null;
 
-    const row = rows[0];
-    return {
-      id: row.id,
-      name: row.name,
-      secondname: row.secondname,
-      lastname: row.lastname,
-      secondlastname: row.secondlastname,
-      email: row.email,
-      password: row.password,
-      phone: row.phone,
-      image_profile: row.image_profile,
-      role: row.role,
-      created_at: new Date(row.created_at),
-    };
+    return this.mapRowToUser(rows[0]);
   }
 
   async getAll(): Promise<User[]> {
@@ -96,25 +78,13 @@ export class MySQLUserRepository implements IUserRepository {
       'SELECT * FROM users ORDER BY created_at DESC'
     );
 
-    return rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      secondname: row.secondname,
-      lastname: row.lastname,
-      secondlastname: row.secondlastname,
-      email: row.email,
-      password: row.password,
-      phone: row.phone,
-      image_profile: row.image_profile,
-      role: row.role,
-      created_at: new Date(row.created_at),
-    }));
+    return rows.map(row => this.mapRowToUser(row));
   }
 
   async update(user: User): Promise<void> {
     const query = `
       UPDATE users 
-      SET name = ?, secondname = ?, lastname = ?, secondlastname = ?, email = ?, password = ?
+      SET name = ?, secondname = ?, lastname = ?, secondlastname = ?, email = ?, password = ?, phone = ?, image_profile = ?, role = ?, account_type = ?, company_name = ?, company_tax_id = ?, company_address = ?, firebase_token = ?
       WHERE id = ?
     `;
 
@@ -125,8 +95,27 @@ export class MySQLUserRepository implements IUserRepository {
       user.secondlastname,
       user.email,
       user.password,
+      user.phone,
+      user.image_profile,
+      user.role,
+      user.account_type,
+      user.company_name,
+      user.company_tax_id,
+      user.company_address,
+      user.firebase_token,
       user.id,
     ]);
+
+    if (result.affectedRows === 0) {
+      throw new Error('Usuario no encontrado');
+    }
+  }
+
+  async updateFirebaseToken(id: number, firebaseToken: string | null): Promise<void> {
+    const [result] = await pool.execute<ResultSetHeader>(
+      'UPDATE users SET firebase_token = ? WHERE id = ?',
+      [firebaseToken, id]
+    );
 
     if (result.affectedRows === 0) {
       throw new Error('Usuario no encontrado');
@@ -149,5 +138,26 @@ export class MySQLUserRepository implements IUserRepository {
       'SELECT COUNT(*) as total FROM users'
     );
     return rows[0].total;
+  }
+
+  private mapRowToUser(row: RowDataPacket): User {
+    return {
+      id: row.id,
+      name: row.name,
+      secondname: row.secondname,
+      lastname: row.lastname,
+      secondlastname: row.secondlastname,
+      email: row.email,
+      password: row.password,
+      phone: row.phone,
+      image_profile: row.image_profile,
+      role: row.role,
+      account_type: row.account_type ?? 'person',
+      company_name: row.company_name ?? null,
+      company_tax_id: row.company_tax_id ?? null,
+      company_address: row.company_address ?? null,
+      firebase_token: row.firebase_token ?? null,
+      created_at: new Date(row.created_at),
+    };
   }
 }

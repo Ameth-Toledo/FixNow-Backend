@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { GetUserByIdUseCase } from '../../application/GetUserByIdUseCase';
-import { UserResponse } from '../../domain/dto/UserResponse';
+import { toUserResponse } from '../../domain/dto/UserResponse';
 
 export class GetUserByIdController {
   constructor(private getUserByIdUseCase: GetUserByIdUseCase) {}
@@ -16,19 +16,7 @@ export class GetUserByIdController {
 
       const user = await this.getUserByIdUseCase.execute(id);
 
-      const userResponse: UserResponse = {
-        id: user.id,
-        name: user.name,
-        secondname: user.secondname,
-        lastname: user.lastname,
-        secondlastname: user.secondlastname,
-        email: user.email,        phone: user.phone,
-        image_profile: user.image_profile,
-        role: user.role,
-        created_at: user.created_at.toISOString(),
-      };
-
-      res.status(200).json({ user: userResponse });
+      res.status(200).json({ user: toUserResponse(user) });
     } catch (error) {
       if (error instanceof Error) {
         res.status(404).json({ error: error.message });

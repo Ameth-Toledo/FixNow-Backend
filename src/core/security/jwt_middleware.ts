@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { validateJWT } from './auth';
+import { UserRole } from '../../users/domain/entities/User';
 
 declare global {
   namespace Express {
     interface Request {
       userId?: number;
       email?: string;
-      roleId?: number;
+      role?: UserRole;
     }
   }
 }
@@ -28,19 +29,19 @@ export function jwtMiddleware(req: Request, res: Response, next: NextFunction): 
 
   req.userId = claims.userId;
   req.email = claims.email;
-  req.roleId = claims.roleId;
+  req.role = claims.role;
 
   next();
 }
 
-export function requireRole(requiredRoleId: number) {
+export function requireRole(requiredRole: UserRole) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.roleId) {
+    if (!req.role) {
       res.status(403).json({ error: 'Rol no encontrado en el token' });
       return;
     }
 
-    if (req.roleId !== requiredRoleId) {
+    if (req.role !== requiredRole) {
       res.status(403).json({ error: 'No tienes permisos para acceder a este recurso' });
       return;
     }
@@ -49,14 +50,14 @@ export function requireRole(requiredRoleId: number) {
   };
 }
 
-export function requireAnyRole(...allowedRoleIds: number[]) {
+export function requireAnyRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (!req.roleId) {
+    if (!req.role) {
       res.status(403).json({ error: 'Rol no encontrado en el token' });
       return;
     }
 
-    if (!allowedRoleIds.includes(req.roleId)) {
+    if (!allowedRoles.includes(req.role)) {
       res.status(403).json({ error: 'No tienes permisos para acceder a este recurso' });
       return;
     }
@@ -78,7 +79,7 @@ export function optionalJWT(req: Request, res: Response, next: NextFunction): vo
   if (claims) {
     req.userId = claims.userId;
     req.email = claims.email;
-    req.roleId = claims.roleId;
+    req.role = claims.role;
   }
 
   next();

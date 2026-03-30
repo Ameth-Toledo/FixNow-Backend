@@ -7,6 +7,7 @@ import { UpdateUserUseCase } from '../application/UpdateUserUseCase';
 import { DeleteUserUseCase } from '../application/DeleteUserUseCase';
 import { AuthController } from './controllers/AuthController';
 import { CreateUserController } from './controllers/CreateUserController';
+import { RegisterCompanyController } from './controllers/RegisterCompanyController';
 import { GetAllUsersController } from './controllers/GetAllUsersController';
 import { GetUserByIdController } from './controllers/GetUserByIdController';
 import { UpdateUserController } from './controllers/UpdateUserController';
@@ -23,6 +24,7 @@ const deleteUserUseCase = new DeleteUserUseCase(userRepository);
 
 export const authController = new AuthController(authService);
 export const createUserController = new CreateUserController(createUserUseCase);
+export const registerCompanyController = new RegisterCompanyController(createUserUseCase);
 export const getAllUsersController = new GetAllUsersController(getAllUsersUseCase);
 export const getUserByIdController = new GetUserByIdController(getUserByIdUseCase);
 export const updateUserController = new UpdateUserController(updateUserUseCase);

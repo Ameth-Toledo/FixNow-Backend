@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Response } from 'express';
+import { UserRole } from '../../users/domain/entities/User';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'AmethToledo';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'AmethToledoRefresh';
@@ -7,18 +8,18 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'AmethToledoRefresh
 interface JWTPayload {
   userId: number;
   email: string;
-  roleId: number;
+  role: UserRole;
 }
 
 interface RefreshPayload {
   userId: number;
 }
 
-export function generateJWT(userId: number, email: string, roleId: number): string {
+export function generateJWT(userId: number, email: string, role: UserRole): string {
   const payload: JWTPayload = {
     userId,
     email,
-    roleId,
+    role,
   };
 
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });

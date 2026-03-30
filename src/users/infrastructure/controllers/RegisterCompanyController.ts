@@ -4,7 +4,7 @@ import { UserRequest } from '../../domain/dto/UserRequest';
 import { toUserResponse } from '../../domain/dto/UserResponse';
 import { uploadImageToCloudinary } from '../../../core/config/cloudinary_service';
 
-export class CreateUserController {
+export class RegisterCompanyController {
   constructor(private createUserUseCase: CreateUserUseCase) {}
 
   async execute(req: Request, res: Response): Promise<void> {
@@ -16,19 +16,24 @@ export class CreateUserController {
         return;
       }
 
-      userRequest.role = 'user';
-      userRequest.account_type = 'person';
+      if (!userRequest.company_name || !userRequest.company_address) {
+        res.status(400).json({ error: 'Campos obligatorios: company_name, company_address' });
+        return;
+      }
+
+      userRequest.role = 'admin';
+      userRequest.account_type = 'company';
 
       if (req.file) {
-        const imageUrl = await uploadImageToCloudinary(req.file.buffer, 'users');
+        const imageUrl = await uploadImageToCloudinary(req.file.buffer, 'companies');
         userRequest.image_profile = imageUrl;
       }
 
-      const user = await this.createUserUseCase.execute(userRequest);
+      const companyUser = await this.createUserUseCase.execute(userRequest);
 
       res.status(201).json({
-        message: 'Usuario creado exitosamente',
-        user: toUserResponse(user),
+        message: 'Empresa creada exitosamente',
+        user: toUserResponse(companyUser),
       });
     } catch (error) {
       if (error instanceof Error) {
