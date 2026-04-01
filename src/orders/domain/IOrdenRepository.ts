@@ -8,4 +8,7 @@ export interface IOrdenRepository {
   getOrdenesByUsuarioId(id_usuario: number): Promise<Orden[]>;
   updateOrden(id: number, data: OrdenUpdateRequest): Promise<Orden | null>;
   deleteOrden(id: number): Promise<boolean>;
+  asignarRepartidor(id_orden: number, id_repartidor: number): Promise<Orden | null>;
+  getOrdenesListasParaRecoleccion(): Promise<Orden[]>;
+  getOrdenesByRepartidorId(id_repartidor: number): Promise<Orden[]>;
 }

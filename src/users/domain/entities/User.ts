@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | 'repartidor';
 export type AccountType = 'person' | 'company';
 
 export interface User {

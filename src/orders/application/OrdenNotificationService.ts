@@ -84,6 +84,7 @@ export class OrdenNotificationService {
       const payload = JSON.stringify({
         id_orden: orden.id_orden,
         id_usuario: orden.id_usuario,
+        id_repartidor: orden.id_repartidor || null,
         estado_orden: orden.estado_orden,
         monto_total: orden.monto_total,
         descripcion: orden.descripcion,
@@ -109,8 +110,119 @@ export class OrdenNotificationService {
         userToken ? [userToken] : [],
         this.buildUserNotificationPayload(orden)
       );
+
+      // Si el estado cambia a listo_para_recoleccion, notificar a repartidores
+      if (orden.estado_orden === 'listo_para_recoleccion') {
+        await this.notificarListoParaRecoleccion(orden);
+      }
     } catch (error: any) {
       console.warn(`⚠️  Error al actualizar orden en MQTT: ${error.message}`);
+    }
+  }
+
+  static async notificarListoParaRecoleccion(orden: any): Promise<void> {
+    try {
+      const payload = {
+        title: 'Nuevo envío',
+        body: `Hay un paquete listo en tienda - Orden #${orden.id_orden}`,
+        data: {
+          type: 'admin',
+          orderId: String(orden.id_orden),
+          status: 'listo_para_recoleccion',
+        },
+      };
+
+      // Notificar al tópico donde están suscritos los repartidores
+      await firebaseNotifications.sendNotificationToTopic(ADMIN_ORDERS_TOPIC, payload);
+
+      // También notificar a tokens individuales de repartidores
+      const repartidorTokens = await this.getRepartidorFirebaseTokens();
+      await firebaseNotifications.sendNotificationToTokens(repartidorTokens, payload);
+    } catch (error: any) {
+      console.warn(`⚠️  Error notificando listo para recolección: ${error.message}`);
+    }
+  }
+
+  static async notificarOrdenAsignada(orden: any, id_repartidor: number): Promise<void> {
+    try {
+      const repartidorToken = await this.getUserFirebaseToken(id_repartidor);
+      const payload = {
+        title: 'Pedido Asignado',
+        body: `Se te ha asignado la orden #${orden.id_orden}`,
+        data: {
+          type: 'user',
+          orderId: String(orden.id_orden),
+          status: String(orden.estado_orden),
+          total: String(orden.monto_total),
+          direccion: String(orden.direccion),
+        },
+      };
+
+      await firebaseNotifications.sendNotificationToTokens(
+        repartidorToken ? [repartidorToken] : [],
+        payload
+      );
+
+      // Publicar a MQTT también
+      const client = getMqttClient();
+      const mqttPayload = JSON.stringify({
+        id_orden: orden.id_orden,
+        id_usuario: orden.id_usuario,
+        id_repartidor: id_repartidor,
+        estado_orden: orden.estado_orden,
+        evento: 'orden_asignada',
+        timestamp: new Date().toISOString()
+      });
+      client.publish(MQTT_TOPICS.ordenes_update, mqttPayload, { qos: 1 });
+    } catch (error: any) {
+      console.warn(`⚠️  Error notificando orden asignada: ${error.message}`);
+    }
+  }
+
+  static async notificarCambioEstadoRepartidor(orden: any): Promise<void> {
+    try {
+      const userToken = await this.getUserFirebaseToken(orden.id_usuario);
+
+      let title = 'Actualización de tu orden';
+      let body = `Tu orden #${orden.id_orden} ha sido actualizada`;
+
+      if (orden.estado_orden === 'en_camino') {
+        title = '¡Tu pedido va en camino!';
+        body = 'El repartidor llegará pronto';
+      } else if (orden.estado_orden === 'entregado') {
+        title = '¡Pedido entregado!';
+        body = `Tu orden #${orden.id_orden} ha sido entregada exitosamente`;
+      }
+
+      const payload = {
+        title,
+        body,
+        data: {
+          type: 'user',
+          orderId: String(orden.id_orden),
+          status: String(orden.estado_orden),
+          total: String(orden.monto_total),
+        },
+      };
+
+      await firebaseNotifications.sendNotificationToTokens(
+        userToken ? [userToken] : [],
+        payload
+      );
+
+      // Publicar a MQTT
+      const client = getMqttClient();
+      const mqttPayload = JSON.stringify({
+        id_orden: orden.id_orden,
+        id_usuario: orden.id_usuario,
+        id_repartidor: orden.id_repartidor || null,
+        estado_orden: orden.estado_orden,
+        evento: 'cambio_estado_repartidor',
+        timestamp: new Date().toISOString()
+      });
+      client.publish(MQTT_TOPICS.ordenes_update, mqttPayload, { qos: 1 });
+    } catch (error: any) {
+      console.warn(`⚠️  Error notificando cambio de estado del repartidor: ${error.message}`);
     }
   }
 
@@ -121,6 +233,20 @@ export class OrdenNotificationService {
        WHERE role = 'admin'
          AND firebase_token IS NOT NULL
          AND firebase_token <> ''`
+    );
+
+    return rows.map(row => row.firebase_token as string);
+  }
+
+  private static async getRepartidorFirebaseTokens(): Promise<string[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.firebase_token
+       FROM users u
+       INNER JOIN repartidores_info ri ON u.id = ri.id_usuario
+       WHERE u.role = 'repartidor'
+         AND ri.esta_activo = TRUE
+         AND u.firebase_token IS NOT NULL
+         AND u.firebase_token <> ''`
     );
 
     return rows.map(row => row.firebase_token as string);

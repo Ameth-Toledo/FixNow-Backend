@@ -17,7 +17,8 @@ export interface OrdenRequest {
 }
 
 export interface OrdenUpdateRequest {
-  estado_orden?: 'pendiente' | 'confirmada' | 'en_proceso' | 'completada' | 'cancelada';
+  estado_orden?: 'pendiente' | 'confirmada' | 'en_proceso' | 'completada' | 'cancelada' | 'listo_para_recoleccion' | 'en_camino' | 'entregado';
   monto_total?: number;
   descripcion?: string;
+  id_repartidor?: number;
 }

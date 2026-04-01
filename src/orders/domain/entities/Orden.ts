@@ -9,6 +9,7 @@ export interface OrdenItem {
 export interface Orden {
   id_orden: number;
   id_usuario: number;
+  id_repartidor?: number | null;
   fecha_orden: Date;
   estado_orden: string;
   monto_total: number;

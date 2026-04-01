@@ -69,6 +69,7 @@ async createOrden(data: OrdenRequest): Promise<Orden> {
     const orden: Orden = {
       id_orden: rows[0].id_orden,
       id_usuario: rows[0].id_usuario,
+      id_repartidor: rows[0].id_repartidor || null,
       fecha_orden: rows[0].fecha_orden,
       estado_orden: rows[0].estado_orden,
       monto_total: rows[0].monto_total,
@@ -104,6 +105,7 @@ async createOrden(data: OrdenRequest): Promise<Orden> {
     return {
       id_orden: row.id_orden,
       id_usuario: row.id_usuario,
+      id_repartidor: row.id_repartidor || null,
       fecha_orden: row.fecha_orden,
       estado_orden: row.estado_orden,
       monto_total: row.monto_total,
@@ -144,6 +146,7 @@ async getOrdenesByUsuarioId(id_usuario: number): Promise<Orden[]> {
       return {
         id_orden: row.id_orden,
         id_usuario: row.id_usuario,
+        id_repartidor: row.id_repartidor || null,
         fecha_orden: row.fecha_orden,
         estado_orden: row.estado_orden,
         monto_total: row.monto_total,
@@ -184,6 +187,11 @@ async getOrdenesByUsuarioId(id_usuario: number): Promise<Orden[]> {
       values.push(data.descripcion);
     }
 
+    if (data.id_repartidor !== undefined) {
+      fields.push('id_repartidor = ?');
+      values.push(data.id_repartidor);
+    }
+
     if (fields.length === 0) {
       return await this.getOrdenById(id);
     }
@@ -194,6 +202,83 @@ async getOrdenesByUsuarioId(id_usuario: number): Promise<Orden[]> {
     await pool.execute<ResultSetHeader>(query, values);
 
     return await this.getOrdenById(id);
+  }
+
+  async asignarRepartidor(id_orden: number, id_repartidor: number): Promise<Orden | null> {
+    await pool.execute<ResultSetHeader>(
+      'UPDATE ordenes SET id_repartidor = ? WHERE id_orden = ?',
+      [id_repartidor, id_orden]
+    );
+    return await this.getOrdenById(id_orden);
+  }
+
+  async getOrdenesListasParaRecoleccion(): Promise<Orden[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM ordenes WHERE estado_orden = 'listo_para_recoleccion' ORDER BY fecha_orden DESC"
+    );
+
+    return Promise.all(rows.map(async (row) => {
+      const [detalles] = await pool.execute<RowDataPacket[]>(
+        'SELECT od.*, p.nombre FROM orden_detalles od JOIN productos p ON od.id_producto = p.id_producto WHERE od.id_orden = ?',
+        [row.id_orden]
+      );
+
+      return {
+        id_orden: row.id_orden,
+        id_usuario: row.id_usuario,
+        id_repartidor: row.id_repartidor || null,
+        fecha_orden: row.fecha_orden,
+        estado_orden: row.estado_orden,
+        monto_total: row.monto_total,
+        descripcion: row.descripcion,
+        direccion: row.direccion,
+        metodo_pago: {
+          tipo: row.metodo_pago_tipo,
+          ultimos4: row.metodo_pago_ultimos4 || undefined
+        },
+        productos: detalles.map(d => ({
+          id_producto: d.id_producto,
+          nombre: d.nombre,
+          cantidad: d.cantidad,
+          precio_unitario: d.precio_unitario
+        }))
+      };
+    }));
+  }
+
+  async getOrdenesByRepartidorId(id_repartidor: number): Promise<Orden[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM ordenes WHERE id_repartidor = ? AND estado_orden NOT IN ('entregado', 'cancelada') ORDER BY fecha_orden DESC",
+      [id_repartidor]
+    );
+
+    return Promise.all(rows.map(async (row) => {
+      const [detalles] = await pool.execute<RowDataPacket[]>(
+        'SELECT od.*, p.nombre FROM orden_detalles od JOIN productos p ON od.id_producto = p.id_producto WHERE od.id_orden = ?',
+        [row.id_orden]
+      );
+
+      return {
+        id_orden: row.id_orden,
+        id_usuario: row.id_usuario,
+        id_repartidor: row.id_repartidor || null,
+        fecha_orden: row.fecha_orden,
+        estado_orden: row.estado_orden,
+        monto_total: row.monto_total,
+        descripcion: row.descripcion,
+        direccion: row.direccion,
+        metodo_pago: {
+          tipo: row.metodo_pago_tipo,
+          ultimos4: row.metodo_pago_ultimos4 || undefined
+        },
+        productos: detalles.map(d => ({
+          id_producto: d.id_producto,
+          nombre: d.nombre,
+          cantidad: d.cantidad,
+          precio_unitario: d.precio_unitario
+        }))
+      };
+    }));
   }
 
   async deleteOrden(id: number): Promise<boolean> {

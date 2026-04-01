@@ -13,7 +13,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20) DEFAULT NULL,
     image_profile VARCHAR(255) DEFAULT NULL,
-    role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    role ENUM('user', 'admin', 'repartidor') NOT NULL DEFAULT 'user',
     account_type ENUM('person', 'company') NOT NULL DEFAULT 'person',
     firebase_token VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -77,13 +77,15 @@ CREATE TABLE ordenes (
     id_orden INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     fecha_orden TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado_orden ENUM('pendiente', 'confirmada', 'en_proceso', 'completada', 'cancelada') DEFAULT 'pendiente',
+    estado_orden ENUM('pendiente', 'confirmada', 'en_proceso', 'completada', 'cancelada', 'listo_para_recoleccion', 'en_camino', 'entregado') DEFAULT 'pendiente',
     monto_total DECIMAL(10, 2) NOT NULL,
     descripcion TEXT,
     direccion VARCHAR(255) NOT NULL,
     metodo_pago_tipo ENUM('tarjeta', 'efectivo') NOT NULL,
     metodo_pago_ultimos4 VARCHAR(4) DEFAULT NULL,
-    CONSTRAINT fk_usuario_orden FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE
+    id_repartidor INT DEFAULT NULL,
+    CONSTRAINT fk_usuario_orden FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_repartidor_orden FOREIGN KEY (id_repartidor) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- 8. Detalles de cada Orden (Carrito de compras guardado)
@@ -96,4 +98,15 @@ CREATE TABLE orden_detalles (
     subtotal DECIMAL(10, 2) NOT NULL,
     CONSTRAINT fk_orden_detalle FOREIGN KEY (id_orden) REFERENCES ordenes(id_orden) ON DELETE CASCADE,
     CONSTRAINT fk_producto_detalle FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
+);
+
+-- 9. Tabla de información adicional de Repartidores
+CREATE TABLE repartidores_info (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL UNIQUE,
+    vehiculo ENUM('moto', 'auto', 'bici') NOT NULL DEFAULT 'moto',
+    placas VARCHAR(20) DEFAULT NULL,
+    esta_activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_repartidor_usuario FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE
 );
