@@ -38,6 +38,8 @@ CREATE TABLE addresses (
     id_usuario INT NOT NULL,
     alias VARCHAR(50),
     direccion VARCHAR(255) NOT NULL,
+    latitud DECIMAL(10, 8) DEFAULT NULL,
+    longitud DECIMAL(11, 8) DEFAULT NULL,
     es_predeterminada BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuario_address FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE

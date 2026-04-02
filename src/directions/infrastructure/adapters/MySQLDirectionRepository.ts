@@ -8,8 +8,8 @@ export class MySQLDirectionRepository implements IDirectionRepository {
 
     async createDirection(data: DirectionRequest): Promise<Direction> {
         const [result] = await pool.execute<ResultSetHeader>(
-            'INSERT INTO addresses (id_usuario, alias, direccion, es_predeterminada) VALUES (?, ?, ?, ?)',
-            [data.id_usuario, data.alias || null, data.direccion, data.es_predeterminada ?? false]
+            'INSERT INTO addresses (id_usuario, alias, direccion, latitud, longitud, es_predeterminada) VALUES (?, ?, ?, ?, ?, ?)',
+            [data.id_usuario, data.alias || null, data.direccion, data.latitud || null, data.longitud || null, data.es_predeterminada ?? false]
         )
         const direction = await this.getDirectionById(result.insertId)
         if (!direction) throw new Error('Error al recuperar la dirección')
@@ -46,6 +46,8 @@ export class MySQLDirectionRepository implements IDirectionRepository {
 
         if (data.alias !== undefined) { fields.push('alias = ?'); values.push(data.alias) }
         if (data.direccion !== undefined) { fields.push('direccion = ?'); values.push(data.direccion) }
+        if (data.latitud !== undefined) { fields.push('latitud = ?'); values.push(data.latitud) }
+        if (data.longitud !== undefined) { fields.push('longitud = ?'); values.push(data.longitud) }
         if (data.es_predeterminada !== undefined) { fields.push('es_predeterminada = ?'); values.push(data.es_predeterminada) }
 
         if (fields.length === 0) return await this.getDirectionById(id)
@@ -72,6 +74,8 @@ export class MySQLDirectionRepository implements IDirectionRepository {
             id_usuario: row.id_usuario,
             alias: row.alias,
             direccion: row.direccion,
+            latitud: row.latitud ? parseFloat(row.latitud) : null,
+            longitud: row.longitud ? parseFloat(row.longitud) : null,
             es_predeterminada: row.es_predeterminada === 1,
             created_at: row.created_at
         }
