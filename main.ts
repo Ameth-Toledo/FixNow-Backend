@@ -19,6 +19,8 @@ import { createEmpresaController, getAllEmpresasController, getEmpresaByIdContro
 import { createRepartidorInfoController, updateRepartidorInfoController, getRepartidoresDisponiblesController, getRepartidorInfoByUsuarioIdController } from './src/repartidores/infrastructure/dependencies';
 import { configureDirectionRoutes } from './src/directions/infrastructure/routes/routes'
 import { createDirectionController, getAllDirectionController, getDirectionByIdController, getDirectionsByUserIdController, updateDirectionController, deleteDirectionController } from './src/directions/infrastructure/dependencies'
+import { configurePayPalRoutes } from './src/paypal/infrastructure/routes/routes';
+import { createPayPalOrderController, capturePayPalOrderController } from './src/paypal/infrastructure/dependencies';
 
 dotenv.config();
 
@@ -112,6 +114,11 @@ const repartidoresRoutes = configureRepartidoresRoutes(
   getRepartidorInfoByUsuarioIdController
 );
 
+const paypalRoutes = configurePayPalRoutes(
+  createPayPalOrderController,
+  capturePayPalOrderController
+);
+
 app.use('/api', userRoutes);
 app.use('/api', productRoutes);
 app.use('/api', categoriasRoutes);
@@ -120,6 +127,7 @@ app.use('/api', ordenesRoutes);
 app.use('/api', directionRoutes)
 app.use('/api', empresasRoutes);
 app.use('/api', repartidoresRoutes);
+app.use('/api', paypalRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hexagonal Architecture API - Running' });
