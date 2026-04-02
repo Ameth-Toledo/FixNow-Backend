@@ -81,6 +81,8 @@ CREATE TABLE ordenes (
     monto_total DECIMAL(10, 2) NOT NULL,
     descripcion TEXT,
     direccion VARCHAR(255) NOT NULL,
+    latitud DECIMAL(10, 8) DEFAULT NULL,
+    longitud DECIMAL(11, 8) DEFAULT NULL,
     metodo_pago_tipo ENUM('tarjeta', 'efectivo') NOT NULL,
     metodo_pago_ultimos4 VARCHAR(4) DEFAULT NULL,
     id_repartidor INT DEFAULT NULL,

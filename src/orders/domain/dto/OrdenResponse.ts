@@ -12,6 +12,8 @@ export class OrdenResponse {
   monto_total: number;
   descripcion?: string;
   direccion: string;
+  latitud?: number | null;
+  longitud?: number | null;
   metodo_pago: {
     tipo: 'tarjeta' | 'efectivo';
     ultimos4?: string;
@@ -30,6 +32,8 @@ export class OrdenResponse {
     this.monto_total = orden.monto_total;
     this.descripcion = orden.descripcion;
     this.direccion = orden.direccion;
+    this.latitud = orden.latitud;
+    this.longitud = orden.longitud;
     this.metodo_pago = orden.metodo_pago;
     this.productos = orden.productos;
   }

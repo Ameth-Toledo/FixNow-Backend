@@ -40,6 +40,8 @@ export class MySQLOrdenRepository implements IOrdenRepository {
       monto_total: row.monto_total,
       descripcion: row.descripcion,
       direccion: row.direccion,
+      latitud: row.latitud ? parseFloat(row.latitud) : null,
+      longitud: row.longitud ? parseFloat(row.longitud) : null,
       metodo_pago: {
         tipo: row.metodo_pago_tipo,
         ultimos4: row.metodo_pago_ultimos4 || undefined
@@ -63,13 +65,15 @@ export class MySQLOrdenRepository implements IOrdenRepository {
     try {
         await connection.beginTransaction();
 
-        const queryOrden = 'INSERT INTO ordenes (id_usuario, fecha_orden, estado_orden, monto_total, descripcion, direccion, metodo_pago_tipo, metodo_pago_ultimos4, id_empresa) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)';
+        const queryOrden = 'INSERT INTO ordenes (id_usuario, fecha_orden, estado_orden, monto_total, descripcion, direccion, latitud, longitud, metodo_pago_tipo, metodo_pago_ultimos4, id_empresa) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         const [result] = await connection.execute<ResultSetHeader>(queryOrden, [
             data.id_usuario,
             data.estado_orden,
             data.monto_total,
             data.descripcion || null,
             data.direccion,
+            data.latitud || null,
+            data.longitud || null,
             data.metodo_pago.tipo,
             data.metodo_pago.ultimos4 || null,
             data.id_empresa || null

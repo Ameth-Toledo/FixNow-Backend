@@ -6,6 +6,8 @@ export interface OrdenRequest {
   monto_total: number;
   descripcion?: string;
   direccion: string;
+  latitud?: number;
+  longitud?: number;
   metodo_pago: {
     tipo: 'tarjeta' | 'efectivo';
     ultimos4?: string;

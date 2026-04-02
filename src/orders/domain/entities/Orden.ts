@@ -20,6 +20,8 @@ export interface Orden {
   monto_total: number;
   descripcion?: string;
   direccion: string;
+  latitud?: number | null;
+  longitud?: number | null;
   metodo_pago: {
     tipo: 'tarjeta' | 'efectivo';
     ultimos4?: string;
