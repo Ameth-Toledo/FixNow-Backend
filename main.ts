@@ -43,7 +43,7 @@ const io = new Server(httpServer, {
 InitCloudinary();
 
 app.use(cors({
-  origin: 'frontend_web_app o *',
+  origin: '*',
   credentials: true,
 }));
 
