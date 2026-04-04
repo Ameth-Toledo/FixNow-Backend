@@ -114,3 +114,28 @@ CREATE TABLE repartidores_info (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_repartidor_usuario FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- 10. Tabla de Conversaciones de Chat
+CREATE TABLE conversaciones (
+    id_conversacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_empresa INT DEFAULT NULL,
+    id_repartidor INT DEFAULT NULL,
+    tipo ENUM('usuario_empresa', 'usuario_repartidor') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_conv_usuario FOREIGN KEY (id_usuario) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_conv_empresa FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa) ON DELETE CASCADE,
+    CONSTRAINT fk_conv_repartidor FOREIGN KEY (id_repartidor) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- 11. Tabla de Mensajes
+CREATE TABLE mensajes (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    id_conversacion INT NOT NULL,
+    id_remitente INT NOT NULL,
+    contenido TEXT NOT NULL,
+    leido BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_mensaje_conv FOREIGN KEY (id_conversacion) REFERENCES conversaciones(id_conversacion) ON DELETE CASCADE,
+    CONSTRAINT fk_mensaje_remitente FOREIGN KEY (id_remitente) REFERENCES users(id) ON DELETE CASCADE
+);

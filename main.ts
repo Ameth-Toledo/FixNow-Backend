@@ -1,4 +1,6 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
@@ -10,6 +12,7 @@ import { configureEspecificacionesRoutes } from './src/specifications/infrastruc
 import { configureOrdenesRoutes } from './src/orders/infrastructure/routes/routes';
 import { configureEmpresasRoutes } from './src/empresas/infrastructure/routes/routes';
 import { configureRepartidoresRoutes } from './src/repartidores/infrastructure/routes/routes';
+import { configureChatRoutes } from './src/chat/infrastructure/routes/routes';
 import { authController, createUserController, registerCompanyController, googleRegisterCompanyController, getAllUsersController, getUserByIdController, updateUserController, deleteUserController, } from './src/users/infrastructure/dependencies';
 import { createProductController, getAllProductsController, getProductByIdController, updateProductController, deleteProductController, getProductsByCategoryController, getProductsByEmpresaController } from './src/products/infrastructure/dependencies';
 import { createCategoriaController, getAllCategoriasController, getCategoriaByIdController, updateCategoriaController, deleteCategoriaController } from './src/categories/infrastructure/dependencies';
@@ -21,11 +24,21 @@ import { configureDirectionRoutes } from './src/directions/infrastructure/routes
 import { createDirectionController, getAllDirectionController, getDirectionByIdController, getDirectionsByUserIdController, updateDirectionController, deleteDirectionController } from './src/directions/infrastructure/dependencies'
 import { configurePayPalRoutes } from './src/paypal/infrastructure/routes/routes';
 import { createPayPalOrderController, capturePayPalOrderController } from './src/paypal/infrastructure/dependencies';
+import { crearConversacionController, getConversacionesController, getMensajesController, marcarLeidoController, enviarMensajeUseCase, marcarLeidoUseCaseSocket } from './src/chat/infrastructure/dependencies';
+import { ChatSocketHandler } from './src/chat/infrastructure/socket/ChatSocketHandler';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true,
+  },
+});
 
 InitCloudinary();
 
@@ -119,6 +132,13 @@ const paypalRoutes = configurePayPalRoutes(
   capturePayPalOrderController
 );
 
+const chatRoutes = configureChatRoutes(
+  crearConversacionController,
+  getConversacionesController,
+  getMensajesController,
+  marcarLeidoController
+);
+
 app.use('/api', userRoutes);
 app.use('/api', productRoutes);
 app.use('/api', categoriasRoutes);
@@ -128,12 +148,18 @@ app.use('/api', directionRoutes)
 app.use('/api', empresasRoutes);
 app.use('/api', repartidoresRoutes);
 app.use('/api', paypalRoutes);
+app.use('/api', chatRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hexagonal Architecture API - Running' });
 });
 
-app.listen(PORT, () => {
+// Inicializar socket handler del chat
+const chatSocketHandler = new ChatSocketHandler(io, enviarMensajeUseCase, marcarLeidoUseCaseSocket);
+chatSocketHandler.init();
+
+httpServer.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
   console.log(`API disponible en http://localhost:${PORT}/api`);
+  console.log(`Socket.io listo para conexiones`);
 });
