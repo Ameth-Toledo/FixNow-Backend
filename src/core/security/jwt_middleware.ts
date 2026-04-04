@@ -13,15 +13,14 @@ declare global {
 }
 
 export function jwtMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const token = req.cookies?.access_token;
-
+  const token = req.cookies?.access_token || req.headers.authorization?.split(' ')[1];
+  
   if (!token) {
     res.status(401).json({ error: 'No autenticado - token no encontrado' });
     return;
   }
 
   const claims = validateJWT(token);
-
   if (!claims) {
     res.status(401).json({ error: 'Token invalido o expirado' });
     return;
@@ -30,7 +29,6 @@ export function jwtMiddleware(req: Request, res: Response, next: NextFunction): 
   req.userId = claims.userId;
   req.email = claims.email;
   req.role = claims.role;
-
   next();
 }
 
