@@ -11,6 +11,8 @@ export class ConversacionResponse {
   nombre_repartidor?: string | null;
   tipo: string;
   ultimo_mensaje?: string | null;
+  ultimo_mensaje_fecha?: Date | null;
+  no_leidos: number;
   created_at: Date;
 
   constructor(conv: Conversacion) {
@@ -23,6 +25,8 @@ export class ConversacionResponse {
     this.nombre_repartidor = conv.nombre_repartidor;
     this.tipo = conv.tipo;
     this.ultimo_mensaje = conv.ultimo_mensaje;
+    this.ultimo_mensaje_fecha = conv.ultimo_mensaje_fecha;
+    this.no_leidos = conv.no_leidos ?? 0;
     this.created_at = conv.created_at;
   }
 }
@@ -37,6 +41,11 @@ export class MensajeResponse {
   archivo_url: string | null;
   leido: boolean;
   created_at: Date;
+  id_mensaje_reply?: number | null;
+  reply_contenido?: string | null;
+  reply_nombre_remitente?: string | null;
+  reply_tipo_mensaje?: string | null;
+  reply_archivo_url?: string | null;
 
   constructor(msg: Mensaje) {
     this.id_mensaje = msg.id_mensaje;
@@ -48,5 +57,10 @@ export class MensajeResponse {
     this.archivo_url = msg.archivo_url;
     this.leido = msg.leido;
     this.created_at = msg.created_at;
+    this.id_mensaje_reply = msg.id_mensaje_reply;
+    this.reply_contenido = msg.reply_contenido;
+    this.reply_nombre_remitente = msg.reply_nombre_remitente;
+    this.reply_tipo_mensaje = msg.reply_tipo_mensaje;
+    this.reply_archivo_url = msg.reply_archivo_url;
   }
 }

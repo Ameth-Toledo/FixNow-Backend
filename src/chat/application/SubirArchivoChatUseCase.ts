@@ -11,7 +11,8 @@ export class SubirArchivoChatUseCase {
     id_remitente: number,
     fileBuffer: Buffer,
     mimetype: string,
-    caption?: string
+    caption?: string,
+    id_mensaje_reply?: number | null
   ): Promise<MensajeResponse> {
     if (!id_conversacion || id_conversacion <= 0) {
       throw new Error('El ID de conversación es obligatorio');
@@ -38,6 +39,7 @@ export class SubirArchivoChatUseCase {
       contenido: caption?.trim() || null,
       tipo_mensaje,
       archivo_url,
+      id_mensaje_reply: id_mensaje_reply ?? null,
     };
 
     const mensaje = await this.chatRepository.enviarMensaje(data);

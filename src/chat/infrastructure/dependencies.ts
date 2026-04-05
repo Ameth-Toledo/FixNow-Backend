@@ -12,7 +12,7 @@ import { MarcarLeidoController } from './controllers/MarcarLeidoController';
 import { SubirArchivoController } from './controllers/SubirArchivoController';
 import { Server } from 'socket.io';
 
-const chatRepository = new MySQLChatRepository();
+export const chatRepository = new MySQLChatRepository();
 
 const crearConversacionUseCase = new CrearConversacionUseCase(chatRepository);
 const getConversacionesUseCase = new GetConversacionesUseCase(chatRepository);
@@ -31,5 +31,5 @@ export const getMensajesController = new GetMensajesController(getMensajesUseCas
 export const marcarLeidoController = new MarcarLeidoController(marcarLeidoUseCase);
 
 export function createSubirArchivoController(io: Server): SubirArchivoController {
-  return new SubirArchivoController(subirArchivoChatUseCase, io);
+  return new SubirArchivoController(subirArchivoChatUseCase, io, chatRepository);
 }

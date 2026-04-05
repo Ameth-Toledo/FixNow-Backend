@@ -12,7 +12,9 @@ export class MySQLChatRepository implements IChatRepository {
            CONCAT(u.name, ' ', u.lastname) AS nombre_usuario,
            e.nombre_comercial AS nombre_empresa,
            CONCAT(r.name, ' ', r.lastname) AS nombre_repartidor,
-           (SELECT m.contenido FROM mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.created_at DESC LIMIT 1) AS ultimo_mensaje
+           (SELECT m.contenido FROM mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.created_at DESC LIMIT 1) AS ultimo_mensaje,
+           (SELECT m.created_at FROM mensajes m WHERE m.id_conversacion = c.id_conversacion ORDER BY m.created_at DESC LIMIT 1) AS ultimo_mensaje_fecha,
+           (SELECT COUNT(*) FROM mensajes m WHERE m.id_conversacion = c.id_conversacion AND m.leido = FALSE AND m.id_remitente = c.id_usuario) AS no_leidos
     FROM conversaciones c
     LEFT JOIN users u ON c.id_usuario = u.id
     LEFT JOIN empresas e ON c.id_empresa = e.id_empresa
@@ -30,6 +32,8 @@ export class MySQLChatRepository implements IChatRepository {
       nombre_repartidor: row.nombre_repartidor || null,
       tipo: row.tipo,
       ultimo_mensaje: row.ultimo_mensaje || null,
+      ultimo_mensaje_fecha: row.ultimo_mensaje_fecha || null,
+      no_leidos: Number(row.no_leidos) || 0,
       created_at: row.created_at,
     };
   }
@@ -45,6 +49,11 @@ export class MySQLChatRepository implements IChatRepository {
       archivo_url: row.archivo_url || null,
       leido: Boolean(row.leido),
       created_at: row.created_at,
+      id_mensaje_reply: row.id_mensaje_reply || null,
+      reply_contenido: row.reply_contenido || null,
+      reply_nombre_remitente: row.reply_nombre_remitente || null,
+      reply_tipo_mensaje: row.reply_tipo_mensaje || null,
+      reply_archivo_url: row.reply_archivo_url || null,
     };
   }
 
@@ -93,13 +102,17 @@ export class MySQLChatRepository implements IChatRepository {
 
   async enviarMensaje(data: EnviarMensajeRequest): Promise<Mensaje> {
     const [result] = await pool.execute<ResultSetHeader>(
-      'INSERT INTO mensajes (id_conversacion, id_remitente, contenido, tipo_mensaje, archivo_url) VALUES (?, ?, ?, ?, ?)',
-      [data.id_conversacion, data.id_remitente, data.contenido ?? null, data.tipo_mensaje || 'texto', data.archivo_url ?? null]
+      'INSERT INTO mensajes (id_conversacion, id_remitente, contenido, tipo_mensaje, archivo_url, id_mensaje_reply) VALUES (?, ?, ?, ?, ?, ?)',
+      [data.id_conversacion, data.id_remitente, data.contenido ?? null, data.tipo_mensaje || 'texto', data.archivo_url ?? null, data.id_mensaje_reply ?? null]
     );
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT m.*, CONCAT(u.name, ' ', u.lastname) AS nombre_remitente
+      `SELECT m.*, CONCAT(u.name, ' ', u.lastname) AS nombre_remitente,
+              r.contenido AS reply_contenido, r.tipo_mensaje AS reply_tipo_mensaje, r.archivo_url AS reply_archivo_url,
+              CONCAT(ur.name, ' ', ur.lastname) AS reply_nombre_remitente
        FROM mensajes m
        LEFT JOIN users u ON m.id_remitente = u.id
+       LEFT JOIN mensajes r ON m.id_mensaje_reply = r.id_mensaje
+       LEFT JOIN users ur ON r.id_remitente = ur.id
        WHERE m.id_mensaje = ?`,
       [result.insertId]
     );
@@ -108,9 +121,13 @@ export class MySQLChatRepository implements IChatRepository {
 
   async getMensajesByConversacionId(id_conversacion: number): Promise<Mensaje[]> {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT m.*, CONCAT(u.name, ' ', u.lastname) AS nombre_remitente
+      `SELECT m.*, CONCAT(u.name, ' ', u.lastname) AS nombre_remitente,
+              r.contenido AS reply_contenido, r.tipo_mensaje AS reply_tipo_mensaje, r.archivo_url AS reply_archivo_url,
+              CONCAT(ur.name, ' ', ur.lastname) AS reply_nombre_remitente
        FROM mensajes m
        LEFT JOIN users u ON m.id_remitente = u.id
+       LEFT JOIN mensajes r ON m.id_mensaje_reply = r.id_mensaje
+       LEFT JOIN users ur ON r.id_remitente = ur.id
        WHERE m.id_conversacion = ?
        ORDER BY m.created_at ASC`,
       [id_conversacion]

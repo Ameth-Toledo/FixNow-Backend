@@ -1,12 +1,14 @@
 import { Server, Socket } from 'socket.io';
 import { EnviarMensajeUseCase } from '../../application/EnviarMensajeUseCase';
 import { MarcarLeidoUseCase } from '../../application/MarcarLeidoUseCase';
+import { IChatRepository } from '../../domain/IChatRepository';
 
 export class ChatSocketHandler {
   constructor(
     private io: Server,
     private enviarMensajeUseCase: EnviarMensajeUseCase,
-    private marcarLeidoUseCase: MarcarLeidoUseCase
+    private marcarLeidoUseCase: MarcarLeidoUseCase,
+    private chatRepository: IChatRepository
   ) {}
 
   init(): void {
@@ -19,6 +21,12 @@ export class ChatSocketHandler {
         console.log(`Socket ${socket.id} unido a conversation_${id_conversacion}`);
       });
 
+      // La empresa se une a su sala para recibir badges en tiempo real
+      socket.on('join_empresa', (id_empresa: number) => {
+        socket.join(`empresa_${id_empresa}`);
+        console.log(`Socket ${socket.id} unido a empresa_${id_empresa}`);
+      });
+
       // El cliente abandona una sala
       socket.on('leave_conversation', (id_conversacion: number) => {
         socket.leave(`conversation_${id_conversacion}`);
@@ -29,10 +37,22 @@ export class ChatSocketHandler {
         id_conversacion: number;
         id_remitente: number;
         contenido: string;
+        id_mensaje_reply?: number | null;
       }) => {
         try {
           const mensaje = await this.enviarMensajeUseCase.execute(data);
           this.io.to(`conversation_${data.id_conversacion}`).emit('new_message', mensaje);
+
+          // Notificar a la empresa para actualizar el badge sin recargar
+          const conv = await this.chatRepository.getConversacionById(data.id_conversacion);
+          if (conv?.id_empresa) {
+            this.io.to(`empresa_${conv.id_empresa}`).emit('badge_update', {
+              id_conversacion: data.id_conversacion,
+              ultimo_mensaje: mensaje.contenido,
+              tipo_mensaje: mensaje.tipo_mensaje,
+              ultimo_mensaje_fecha: mensaje.created_at
+            });
+          }
         } catch (error: any) {
           socket.emit('chat_error', { message: error.message });
         }

@@ -24,7 +24,7 @@ import { configureDirectionRoutes } from './src/directions/infrastructure/routes
 import { createDirectionController, getAllDirectionController, getDirectionByIdController, getDirectionsByUserIdController, updateDirectionController, deleteDirectionController } from './src/directions/infrastructure/dependencies'
 import { configurePayPalRoutes } from './src/paypal/infrastructure/routes/routes';
 import { createPayPalOrderController, capturePayPalOrderController } from './src/paypal/infrastructure/dependencies';
-import { crearConversacionController, getConversacionesController, getMensajesController, marcarLeidoController, enviarMensajeUseCase, marcarLeidoUseCaseSocket, createSubirArchivoController } from './src/chat/infrastructure/dependencies';
+import { crearConversacionController, getConversacionesController, getMensajesController, marcarLeidoController, enviarMensajeUseCase, marcarLeidoUseCaseSocket, createSubirArchivoController, chatRepository } from './src/chat/infrastructure/dependencies';
 import { ChatSocketHandler } from './src/chat/infrastructure/socket/ChatSocketHandler';
 
 dotenv.config();
@@ -162,7 +162,7 @@ app.get('/', (req, res) => {
 });
 
 // Inicializar socket handler del chat
-const chatSocketHandler = new ChatSocketHandler(io, enviarMensajeUseCase, marcarLeidoUseCaseSocket);
+const chatSocketHandler = new ChatSocketHandler(io, enviarMensajeUseCase, marcarLeidoUseCaseSocket, chatRepository);
 chatSocketHandler.init();
 
 httpServer.listen(PORT, () => {

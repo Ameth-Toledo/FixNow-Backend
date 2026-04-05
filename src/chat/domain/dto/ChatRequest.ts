@@ -11,4 +11,5 @@ export interface EnviarMensajeRequest {
   contenido: string | null;
   tipo_mensaje?: 'texto' | 'imagen' | 'video' | 'archivo';
   archivo_url?: string | null;
+  id_mensaje_reply?: number | null;
 }

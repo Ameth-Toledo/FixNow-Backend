@@ -96,7 +96,7 @@ export class AuthController {
       const newAccessToken = generateJWT(user.id, user.email, user.role);
 
       setAuthCookie(res, newAccessToken);
-      res.status(200).json({ message: 'Token renovado' });
+      res.status(200).json({ message: 'Token renovado', accessToken: newAccessToken });
     } catch (error) {
       res.status(401).json({ error: 'Error al renovar token' });
     }

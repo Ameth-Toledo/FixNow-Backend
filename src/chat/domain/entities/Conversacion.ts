@@ -8,5 +8,7 @@ export interface Conversacion {
   nombre_repartidor?: string | null;
   tipo: 'usuario_empresa' | 'usuario_repartidor';
   ultimo_mensaje?: string | null;
+  ultimo_mensaje_fecha?: Date | null;
+  no_leidos?: number;
   created_at: Date;
 }

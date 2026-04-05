@@ -8,4 +8,9 @@ export interface Mensaje {
   archivo_url: string | null;
   leido: boolean;
   created_at: Date;
+  id_mensaje_reply?: number | null;
+  reply_contenido?: string | null;
+  reply_nombre_remitente?: string | null;
+  reply_tipo_mensaje?: string | null;
+  reply_archivo_url?: string | null;
 }
