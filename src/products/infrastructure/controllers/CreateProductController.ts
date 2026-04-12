@@ -8,7 +8,16 @@ export class CreateProductController {
 
   async handle(req: Request, res: Response): Promise<void> {
     try {
-      const data: ProductRequest = req.body;
+      const body = req.body;
+      const data: ProductRequest = {
+        nombre:       body.nombre,
+        sku:          body.sku,
+        descripcion:  body.descripcion,
+        precio_venta: parseFloat(body.precio_venta),
+        stock_actual: parseInt(body.stock_actual ?? '0', 10),
+        id_categoria: body.id_categoria ? parseInt(body.id_categoria, 10) : undefined,
+        id_empresa:   body.id_empresa   ? parseInt(body.id_empresa, 10)   : undefined,
+      };
 
       if (req.file) {
         const imageUrl = await uploadImageToCloudinary(req.file.buffer, 'products');

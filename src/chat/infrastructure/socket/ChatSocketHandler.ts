@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { EnviarMensajeUseCase } from '../../application/EnviarMensajeUseCase';
 import { MarcarLeidoUseCase } from '../../application/MarcarLeidoUseCase';
 import { IChatRepository } from '../../domain/IChatRepository';
+import { sendNotificationToTokens } from '../../../core/config/firebase_admin';
 
 export class ChatSocketHandler {
   constructor(
@@ -52,6 +53,32 @@ export class ChatSocketHandler {
               tipo_mensaje: mensaje.tipo_mensaje,
               ultimo_mensaje_fecha: mensaje.created_at
             });
+
+            const esDelUsuario = data.id_remitente === conv.id_usuario;
+            const nombreRemitente = mensaje.nombre_remitente || 'Nuevo mensaje';
+            const cuerpo = mensaje.tipo_mensaje === 'texto'
+              ? (mensaje.contenido || '')
+              : '📎 Archivo adjunto';
+
+            if (esDelUsuario) {
+              // Usuario escribió → notificar a los agentes de la empresa
+              const tokensEmpresa = await this.chatRepository.getFirebaseTokensByEmpresaId(conv.id_empresa);
+              await sendNotificationToTokens(tokensEmpresa, {
+                title: `💬 ${nombreRemitente}`,
+                body: cuerpo,
+                data: { id_conversacion: String(data.id_conversacion), tipo: 'chat' }
+              });
+            } else {
+              // Empresa escribió → notificar al usuario
+              const tokenUsuario = await this.chatRepository.getFirebaseTokenByUserId(conv.id_usuario);
+              if (tokenUsuario) {
+                await sendNotificationToTokens([tokenUsuario], {
+                  title: `💬 ${nombreRemitente}`,
+                  body: cuerpo,
+                  data: { id_conversacion: String(data.id_conversacion), tipo: 'chat' }
+                });
+              }
+            }
           }
         } catch (error: any) {
           socket.emit('chat_error', { message: error.message });

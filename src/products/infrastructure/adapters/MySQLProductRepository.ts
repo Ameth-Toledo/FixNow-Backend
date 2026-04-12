@@ -52,7 +52,10 @@ export class MySQLProductRepository implements IProductRepository {
 
   async getProductById(id: number): Promise<Product | null> {
     const [productRows] = await pool.execute<RowDataPacket[]>(
-      'SELECT * FROM productos WHERE id_producto = ?',
+      `SELECT p.*, c.nombre_categoria AS categoria
+       FROM productos p
+       LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+       WHERE p.id_producto = ?`,
       [id]
     );
 
@@ -80,6 +83,7 @@ export class MySQLProductRepository implements IProductRepository {
       stock_actual: row.stock_actual,
       imagen_url: row.imagen_url,
       id_categoria: row.id_categoria,
+      categoria: row.categoria ?? null,
       id_empresa: row.id_empresa,
       fecha_registro: new Date(row.fecha_registro),
       especificaciones,
@@ -164,7 +168,6 @@ export class MySQLProductRepository implements IProductRepository {
       'SELECT id_producto FROM productos WHERE id_categoria = ? ORDER BY fecha_registro DESC',
       [id_categoria]
     );
-
     const products: Product[] = [];
     for (const row of rows) {
       const product = await this.getProductById(row.id_producto);
@@ -178,7 +181,6 @@ export class MySQLProductRepository implements IProductRepository {
       'SELECT id_producto FROM productos WHERE id_empresa = ? ORDER BY fecha_registro DESC',
       [id_empresa]
     );
-
     const products: Product[] = [];
     for (const row of rows) {
       const product = await this.getProductById(row.id_producto);

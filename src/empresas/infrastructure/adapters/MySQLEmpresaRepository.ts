@@ -74,14 +74,16 @@ export class MySQLEmpresaRepository implements IEmpresaRepository {
 
   private mapRow(row: RowDataPacket): Empresa {
     return {
-      id_empresa: row.id_empresa,
-      id_usuario: row.id_usuario,
-      nombre_comercial: row.nombre_comercial,
-      direccion: row.direccion,
+      id_empresa:        row.id_empresa,
+      id_usuario:        row.id_usuario,
+      nombre_comercial:  row.nombre_comercial,
+      direccion:         row.direccion,
       telefono_contacto: row.telefono_contacto,
-      correo_contacto: row.correo_contacto,
-      logo_url: row.logo_url,
-      fecha_registro: new Date(row.fecha_registro),
+      correo_contacto:   row.correo_contacto,
+      logo_url:          row.logo_url,
+      fecha_registro:    new Date(row.fecha_registro),
+      precio_asesoria:   row.precio_asesoria != null ? Number(row.precio_asesoria) : null,
+      asesoria_activa:   Boolean(row.asesoria_activa),
     };
   }
 }

@@ -13,6 +13,7 @@ import { GetAllUsersController } from './controllers/GetAllUsersController';
 import { GetUserByIdController } from './controllers/GetUserByIdController';
 import { UpdateUserController } from './controllers/UpdateUserController';
 import { DeleteUserController } from './controllers/DeleteUserController';
+import { ChangePasswordController } from './controllers/ChangePasswordController';
 import { empresaRepository } from '../../empresas/infrastructure/dependencies';
 
 const userRepository = new MySQLUserRepository();
@@ -32,3 +33,4 @@ export const getAllUsersController = new GetAllUsersController(getAllUsersUseCas
 export const getUserByIdController = new GetUserByIdController(getUserByIdUseCase);
 export const updateUserController = new UpdateUserController(updateUserUseCase);
 export const deleteUserController = new DeleteUserController(deleteUserUseCase);
+export const changePasswordController = new ChangePasswordController(userRepository);

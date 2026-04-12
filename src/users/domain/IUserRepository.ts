@@ -9,4 +9,5 @@ export interface IUserRepository {
   updateFirebaseToken(id: number, firebaseToken: string | null): Promise<void>;
   delete(id: number): Promise<void>;
   getTotal(): Promise<number>;
+  changePassword(id: number, currentPassword: string, newPassword: string): Promise<void>;
 }

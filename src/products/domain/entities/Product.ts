@@ -13,7 +13,8 @@ export interface Product {
   stock_actual: number;
   imagen_url: string | null;
   id_categoria: number | null;
-  id_empresa: number | null;
+  categoria:    string | null;
+  id_empresa:   number | null;
   fecha_registro: Date;
   especificaciones?: Especificacion[];
 }

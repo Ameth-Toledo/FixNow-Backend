@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { SubirArchivoChatUseCase } from '../../application/SubirArchivoChatUseCase';
 import { IChatRepository } from '../../domain/IChatRepository';
 import { Server } from 'socket.io';
+import { sendNotificationToTokens } from '../../../core/config/firebase_admin';
 
 export class SubirArchivoController {
   constructor(
@@ -43,6 +44,28 @@ export class SubirArchivoController {
           tipo_mensaje: mensaje.tipo_mensaje,
           ultimo_mensaje_fecha: mensaje.created_at
         });
+
+        const esDelUsuario = id_remitente === conv.id_usuario;
+        const nombreRemitente = mensaje.nombre_remitente || 'Nuevo mensaje';
+        const cuerpo = '📎 Archivo adjunto';
+
+        if (esDelUsuario) {
+          const tokensEmpresa = await this.chatRepository.getFirebaseTokensByEmpresaId(conv.id_empresa);
+          await sendNotificationToTokens(tokensEmpresa, {
+            title: `💬 ${nombreRemitente}`,
+            body: cuerpo,
+            data: { id_conversacion: String(id_conversacion), tipo: 'chat' }
+          });
+        } else {
+          const tokenUsuario = await this.chatRepository.getFirebaseTokenByUserId(conv.id_usuario);
+          if (tokenUsuario) {
+            await sendNotificationToTokens([tokenUsuario], {
+              title: `💬 ${nombreRemitente}`,
+              body: cuerpo,
+              data: { id_conversacion: String(id_conversacion), tipo: 'chat' }
+            });
+          }
+        }
       }
 
       res.status(201).json(mensaje);

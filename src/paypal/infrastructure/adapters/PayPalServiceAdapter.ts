@@ -33,22 +33,37 @@ export class PayPalServiceAdapter implements IPayPalService {
     return response.data.access_token;
   }
 
-  async createOrder(amount: number, currencyCode: string): Promise<{ id: string; status: string }> {
+  async createOrder(
+    amount: number,
+    currencyCode: string,
+    options?: { returnUrl?: string; cancelUrl?: string }
+  ): Promise<{ id: string; status: string }> {
     const accessToken = await this.getAccessToken();
+
+    const body: any = {
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          amount: {
+            currency_code: currencyCode,
+            value: amount.toFixed(2),
+          },
+        },
+      ],
+    };
+
+    if (options?.returnUrl || options?.cancelUrl) {
+      body.application_context = {
+        ...(options.returnUrl && { return_url: options.returnUrl }),
+        ...(options.cancelUrl && { cancel_url: options.cancelUrl }),
+        brand_name: 'Voltio',
+        user_action: 'PAY_NOW',
+      };
+    }
 
     const response = await axios.post(
       `${this.baseUrl}/v2/checkout/orders`,
-      {
-        intent: 'CAPTURE',
-        purchase_units: [
-          {
-            amount: {
-              currency_code: currencyCode,
-              value: amount.toFixed(2),
-            },
-          },
-        ],
-      },
+      body,
       {
         headers: {
           'Content-Type': 'application/json',

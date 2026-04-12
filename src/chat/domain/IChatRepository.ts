@@ -11,4 +11,6 @@ export interface IChatRepository {
   enviarMensaje(data: EnviarMensajeRequest): Promise<Mensaje>;
   getMensajesByConversacionId(id_conversacion: number): Promise<Mensaje[]>;
   marcarMensajesLeidos(id_conversacion: number, id_usuario: number): Promise<void>;
+  getFirebaseTokenByUserId(id_usuario: number): Promise<string | null>;
+  getFirebaseTokensByEmpresaId(id_empresa: number): Promise<string[]>;
 }

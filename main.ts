@@ -13,7 +13,7 @@ import { configureOrdenesRoutes } from './src/orders/infrastructure/routes/route
 import { configureEmpresasRoutes } from './src/empresas/infrastructure/routes/routes';
 import { configureRepartidoresRoutes } from './src/repartidores/infrastructure/routes/routes';
 import { configureChatRoutes } from './src/chat/infrastructure/routes/routes';
-import { authController, createUserController, registerCompanyController, googleRegisterCompanyController, getAllUsersController, getUserByIdController, updateUserController, deleteUserController, } from './src/users/infrastructure/dependencies';
+import { authController, createUserController, registerCompanyController, googleRegisterCompanyController, getAllUsersController, getUserByIdController, updateUserController, deleteUserController, changePasswordController } from './src/users/infrastructure/dependencies';
 import { createProductController, getAllProductsController, getProductByIdController, updateProductController, deleteProductController, getProductsByCategoryController, getProductsByEmpresaController } from './src/products/infrastructure/dependencies';
 import { createCategoriaController, getAllCategoriasController, getCategoriaByIdController, updateCategoriaController, deleteCategoriaController } from './src/categories/infrastructure/dependencies';
 import { createEspecificacionController, getAllEspecificacionesController, getEspecificacionByIdController, getEspecificacionesByProductIdController, updateEspecificacionController, deleteEspecificacionController } from './src/specifications/infrastructure/dependencies';
@@ -24,6 +24,15 @@ import { configureDirectionRoutes } from './src/directions/infrastructure/routes
 import { createDirectionController, getAllDirectionController, getDirectionByIdController, getDirectionsByUserIdController, updateDirectionController, deleteDirectionController } from './src/directions/infrastructure/dependencies'
 import { configurePayPalRoutes } from './src/paypal/infrastructure/routes/routes';
 import { createPayPalOrderController, capturePayPalOrderController } from './src/paypal/infrastructure/dependencies';
+import { configureSuscripcionesRoutes } from './src/subscriptions/infrastructure/routes/routes';
+import { getPlanesController, iniciarSuscripcionController, retornoPayPalController, webhookController, getEstadoController, cancelarSuscripcionController, setupPlanesController, actualizarVencimientosUseCase } from './src/subscriptions/infrastructure/dependencies';
+import { configureAsesoriaRoutes } from './src/asesoria/infrastructure/routes/routes';
+import { configurarAsesoriaController, iniciarPagoAsesoriaController, confirmarPagoAsesoriaController, getAccesoAsesoriaController } from './src/asesoria/infrastructure/dependencies';
+import { configureWalletRoutes } from './src/wallet/infrastructure/routes/routes';
+import { getWalletController, solicitarRetiroController, getRetirosController, procesarRetiroController } from './src/wallet/infrastructure/dependencies';
+import { configureBannerRoutes } from './src/banners/infrastructure/routes/routes';
+import { createBannerController, getBannersByEmpresaController, toggleBannerController, deleteBannerController } from './src/banners/infrastructure/dependencies';
+import { iniciarCronSuscripciones } from './src/subscriptions/infrastructure/cron/SuscripcionCronJob';
 import { crearConversacionController, getConversacionesController, getMensajesController, marcarLeidoController, enviarMensajeUseCase, marcarLeidoUseCaseSocket, createSubirArchivoController, chatRepository } from './src/chat/infrastructure/dependencies';
 import { ChatSocketHandler } from './src/chat/infrastructure/socket/ChatSocketHandler';
 
@@ -64,7 +73,8 @@ const userRoutes = configureUserRoutes(
   getAllUsersController,
   getUserByIdController,
   updateUserController,
-  deleteUserController
+  deleteUserController,
+  changePasswordController
 );
 
 const productRoutes = configureProductRoutes(
@@ -138,12 +148,43 @@ const paypalRoutes = configurePayPalRoutes(
   capturePayPalOrderController
 );
 
+const suscripcionesRoutes = configureSuscripcionesRoutes(
+  getPlanesController,
+  iniciarSuscripcionController,
+  retornoPayPalController,
+  webhookController,
+  getEstadoController,
+  cancelarSuscripcionController,
+  setupPlanesController
+);
+
 const chatRoutes = configureChatRoutes(
   crearConversacionController,
   getConversacionesController,
   getMensajesController,
   marcarLeidoController,
   createSubirArchivoController(io)
+);
+
+const asesoriaRoutes = configureAsesoriaRoutes(
+  configurarAsesoriaController,
+  iniciarPagoAsesoriaController,
+  confirmarPagoAsesoriaController,
+  getAccesoAsesoriaController
+);
+
+const walletRoutes = configureWalletRoutes(
+  getWalletController,
+  solicitarRetiroController,
+  getRetirosController,
+  procesarRetiroController
+);
+
+const bannerRoutes = configureBannerRoutes(
+  createBannerController,
+  getBannersByEmpresaController,
+  toggleBannerController,
+  deleteBannerController
 );
 
 app.use('/api', userRoutes);
@@ -155,11 +196,18 @@ app.use('/api', directionRoutes)
 app.use('/api', empresasRoutes);
 app.use('/api', repartidoresRoutes);
 app.use('/api', paypalRoutes);
+app.use('/api', suscripcionesRoutes);
 app.use('/api', chatRoutes);
+app.use('/api', asesoriaRoutes);
+app.use('/api', walletRoutes);
+app.use('/api', bannerRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hexagonal Architecture API - Running' });
 });
+
+// Inicializar cron de suscripciones
+iniciarCronSuscripciones(actualizarVencimientosUseCase);
 
 // Inicializar socket handler del chat
 const chatSocketHandler = new ChatSocketHandler(io, enviarMensajeUseCase, marcarLeidoUseCaseSocket, chatRepository);

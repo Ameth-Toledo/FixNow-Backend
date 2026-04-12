@@ -141,4 +141,25 @@ export class MySQLChatRepository implements IChatRepository {
       [id_conversacion, id_usuario]
     );
   }
+
+  async getFirebaseTokenByUserId(id_usuario: number): Promise<string | null> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT firebase_token FROM users WHERE id = ? AND firebase_token IS NOT NULL',
+      [id_usuario]
+    );
+    return rows[0]?.firebase_token ?? null;
+  }
+
+  async getFirebaseTokensByEmpresaId(id_empresa: number): Promise<string[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT u.firebase_token FROM users u
+       INNER JOIN empresas e ON e.id_propietario = u.id
+       WHERE e.id_empresa = ? AND u.firebase_token IS NOT NULL
+       UNION
+       SELECT u.firebase_token FROM users u
+       WHERE u.id_empresa = ? AND u.firebase_token IS NOT NULL`,
+      [id_empresa, id_empresa]
+    );
+    return rows.map(r => r.firebase_token).filter(Boolean);
+  }
 }

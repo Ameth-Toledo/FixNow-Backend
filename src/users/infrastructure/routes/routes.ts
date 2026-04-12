@@ -7,6 +7,7 @@ import { GetAllUsersController } from '../controllers/GetAllUsersController';
 import { GetUserByIdController } from '../controllers/GetUserByIdController';
 import { UpdateUserController } from '../controllers/UpdateUserController';
 import { DeleteUserController } from '../controllers/DeleteUserController';
+import { ChangePasswordController } from '../controllers/ChangePasswordController';
 import { jwtMiddleware } from '../../../core/security/jwt_middleware';
 import { upload } from '../../../core/config/multer_config';
 
@@ -18,7 +19,8 @@ export function configureUserRoutes(
   getAllUsersCtrl: GetAllUsersController,
   getUserByIdCtrl: GetUserByIdController,
   updateUserCtrl: UpdateUserController,
-  deleteUserCtrl: DeleteUserController
+  deleteUserCtrl: DeleteUserController,
+  changePasswordCtrl: ChangePasswordController
 ): Router {
   const router = Router();
 
@@ -37,6 +39,7 @@ export function configureUserRoutes(
   router.get('/users', jwtMiddleware, (req, res) => getAllUsersCtrl.execute(req, res));
   router.get('/users/:id', jwtMiddleware, (req, res) => getUserByIdCtrl.execute(req, res));
   router.put('/users/:id', jwtMiddleware, upload.single('imagen'), (req, res) => updateUserCtrl.execute(req, res));
+  router.put('/users/:id/password', jwtMiddleware, (req, res) => changePasswordCtrl.execute(req, res));
   router.delete('/users/:id', jwtMiddleware, (req, res) => deleteUserCtrl.execute(req, res));
 
   return router;

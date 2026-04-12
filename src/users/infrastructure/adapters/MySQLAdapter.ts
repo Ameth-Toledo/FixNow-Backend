@@ -2,6 +2,7 @@ import { IUserRepository } from '../../domain/IUserRepository';
 import { User } from '../../domain/entities/User';
 import pool from '../../../core/config/conn';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { checkPassword, hashPassword } from '../../../core/security/hash';
 
 export class MySQLUserRepository implements IUserRepository {
   async save(user: Omit<User, 'id' | 'created_at'>): Promise<User> {
@@ -129,6 +130,23 @@ export class MySQLUserRepository implements IUserRepository {
       'SELECT COUNT(*) as total FROM users'
     );
     return rows[0].total;
+  }
+
+  async changePassword(id: number, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.getByID(id);
+    if (!user) throw new Error('Usuario no encontrado');
+    if (!user.password) throw new Error('Este usuario usa autenticación social y no tiene contraseña');
+
+    const isValid = await checkPassword(user.password, currentPassword);
+    if (!isValid) throw new Error('La contraseña actual es incorrecta');
+
+    if (newPassword.length < 6) throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
+
+    const hashed = await hashPassword(newPassword);
+    await pool.execute<ResultSetHeader>(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashed, id]
+    );
   }
 
   private mapRowToUser(row: RowDataPacket): User {

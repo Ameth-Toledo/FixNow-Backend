@@ -8,6 +8,8 @@ import { GetProductsByCategoryController } from '../controllers/GetProductsByCat
 import { GetProductsByEmpresaController } from '../controllers/GetProductsByEmpresaController';
 import { jwtMiddleware } from '../../../core/security/jwt_middleware';
 import { upload } from '../../../core/config/multer_config';
+import { checkLimiteProductos } from '../../../subscriptions/infrastructure/middleware/checkLimiteProductos';
+import { suscripcionRepository } from '../../../subscriptions/infrastructure/dependencies';
 
 export function configureProductRoutes(
   createProductCtrl: CreateProductController,
@@ -29,7 +31,7 @@ export function configureProductRoutes(
     getProductsByEmpresaCtrl.handle(req, res)
   );
 
-  router.post('/products', jwtMiddleware, upload.single('imagen'), (req: Request, res: Response) => 
+  router.post('/products', jwtMiddleware, checkLimiteProductos(suscripcionRepository), upload.single('imagen'), (req: Request, res: Response) =>
     createProductCtrl.handle(req, res)
   );
   router.put('/products/:id', jwtMiddleware, upload.single('imagen'), (req: Request, res: Response) => 
