@@ -35,6 +35,7 @@ import { createBannerController, getBannersByEmpresaController, toggleBannerCont
 import { iniciarCronSuscripciones } from './src/subscriptions/infrastructure/cron/SuscripcionCronJob';
 import { crearConversacionController, getConversacionesController, getMensajesController, marcarLeidoController, enviarMensajeUseCase, marcarLeidoUseCaseSocket, createSubirArchivoController, chatRepository } from './src/chat/infrastructure/dependencies';
 import { ChatSocketHandler } from './src/chat/infrastructure/socket/ChatSocketHandler';
+import { DeliverySocketHandler } from './src/delivery/infrastructure/socket/DeliverySocketHandler';
 
 dotenv.config();
 
@@ -212,6 +213,10 @@ iniciarCronSuscripciones(actualizarVencimientosUseCase);
 // Inicializar socket handler del chat
 const chatSocketHandler = new ChatSocketHandler(io, enviarMensajeUseCase, marcarLeidoUseCaseSocket, chatRepository);
 chatSocketHandler.init();
+
+// Inicializar socket handler del tracking de repartidor
+const deliverySocketHandler = new DeliverySocketHandler(io);
+deliverySocketHandler.init();
 
 httpServer.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
